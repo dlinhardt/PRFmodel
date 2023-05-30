@@ -6,6 +6,8 @@
         "seed":         2764932,
         "grid_density": 3,
         "fixed_hrf":    false,
-        "multiprocess": true
+        "multiprocess": true,
+        "stim_scale_factor": false,
+        "verbosity":    1
     }
 }

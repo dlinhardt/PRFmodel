@@ -3,11 +3,12 @@
     "sessionName": "editThis",
     "solver":      "popeye",
     "options": {
+        "prfprepareAnalysis": "01",
         "seed":         2764932,
         "grid_density": 3,
         "fixed_hrf":    false,
-        "multiprocess": true,
-        "stim_scale_factor": false,
-        "verbosity":    1
-    }
+        "stim_scale_factor": false
+    },
+    "multiprocess": true,
+    "verbosity":    1
 }

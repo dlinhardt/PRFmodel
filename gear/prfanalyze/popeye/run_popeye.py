@@ -47,38 +47,7 @@ else:
 #############################################################
 # fitting function
 def fit_voxel(tup):
-    (ii, vx, width, height, tr) = tup
-    ### STIMULUS
-    # First get a viewing distance and screen size
-    dist = 100 # 100 cm is arbitrary
-    stim_width = 2 * dist * np.tan(np.pi/180 * width/2)
-    stimulus = VisualStimulus(stim, dist, stim_width, stim_scale_factor, float(tr), ctypes.c_int16)
-    if fixed_hrf is not False:
-        model = og_nohrf.GaussianModel(stimulus, utils.double_gamma_hrf)
-        model.hrf_delay = fixed_hrf
-    else: model = og.GaussianModel(stimulus, utils.double_gamma_hrf)
-    ### FIT
-    ## define search grids
-    # these define min and max of the edge of the initial brute-force search.
-    x_grid = (-width/2,width/2)
-    y_grid = (-height/2,height/2)
-    s_grid = (1/stimulus.ppd + 0.25, 5.25)
-    h_grid = (-1.0, 1.0)
-    ## define search bounds
-    # these define the boundaries of the final gradient-descent search.
-    x_bound = (-width, width)
-    y_bound = (-height, height)
-    s_bound = (1/stimulus.ppd, 12.0) # smallest sigma is a pixel
-    b_bound = (1e-8,None)
-    u_bound = (None,None)
-    h_bound = (-3.0,3.0)
-    ## package the grids and bounds
-    if fixed_hrf is not False:
-        grids = (x_grid, y_grid, s_grid)
-        bounds = (x_bound, y_bound, s_bound, b_bound, u_bound,)
-    else:
-        grids = (x_grid, y_grid, s_grid, h_grid)
-        bounds = (x_bound, y_bound, s_bound, h_bound, b_bound, u_bound,)
+    (ii, vx, grids, bounds, model) = tup
     ## fit the response
     # auto_fit = True fits the model on assignment
     # verbose = 0 is silent
@@ -120,17 +89,56 @@ else:
 
     tr = bold_im.header['pixdim'][4]
 
-if isinstance(width, int) or isinstance(width, float):
-    width = np.tile(width, len(bold))
-if isinstance(height, int) or isinstance(height, float):
-    height = np.tile(height, len(bold))
-if isinstance(tr, int) or isinstance(tr, float) or tr.dtype=='float32':
-    tr = np.tile(tr, len(bold))
+# we dont need this anymore
+# if isinstance(width, int) or isinstance(width, float):
+#     width = np.tile(width, len(bold))
+# if isinstance(height, int) or isinstance(height, float):
+#     height = np.tile(height, len(bold))
+# if isinstance(tr, int) or isinstance(tr, float) or tr.dtype=='float32':
+#     tr = np.tile(tr, len(bold))
+
+### STIMULUS
+# First get a viewing distance and screen size
+dist = 100 # 100 cm is arbitrary
+stim_width = 2 * dist * np.tan(np.pi/180 * width/2)
+stimulus = VisualStimulus(stim, dist, stim_width, stim_scale_factor, float(tr), ctypes.c_int16)
+if fixed_hrf is not False:
+    model = og_nohrf.GaussianModel(stimulus, utils.double_gamma_hrf)
+    model.hrf_delay = fixed_hrf
+else: model = og.GaussianModel(stimulus, utils.double_gamma_hrf)
+### FIT
+## define search grids
+# these define min and max of the edge of the initial brute-force search.
+x_grid = (-width/2,width/2)
+y_grid = (-height/2,height/2)
+s_grid = (1/stimulus.ppd + 0.25, 5.25)
+h_grid = (-1.0, 1.0)
+## define search bounds
+# these define the boundaries of the final gradient-descent search.
+x_bound = (-width, width)
+y_bound = (-height, height)
+s_bound = (1/stimulus.ppd, 12.0) # smallest sigma is a pixel
+b_bound = (1e-8,None)
+u_bound = (None,None)
+h_bound = (-3.0,3.0)
+## package the grids and bounds
+if fixed_hrf is not False:
+    grids  = (x_grid, y_grid, s_grid)
+    bounds = (x_bound, y_bound, s_bound, b_bound, u_bound,)
+else:
+    grids  = (x_grid, y_grid, s_grid, h_grid)
+    bounds = (x_bound, y_bound, s_bound, h_bound, b_bound, u_bound,)
+
+grids  = np.repeat(np.array(grids)[np.newaxis,...], len(bold), axis=0)
+bounds = np.repeat(np.array(bounds)[np.newaxis,...], len(bold), axis=0)
+model  = np.tile(model, len(bold))
+
+print(f'Using {mps} cores to fit {len(bold)} voxels.')
 
 if mps == 1:
-    voxs = [fit_voxel((ii, vx, w, h, tr)) for (ii, vx, w, h, tr) in zip(range(len(bold)), bold, width, height, tr)]
+    voxs = [fit_voxel((ii, vx, g, b, m)) for (ii, vx, g, b, m) in zip(range(len(bold)), bold, grids, bounds, model)]
 else:
-    tups = list(zip(range(len(bold)), bold, width, height, tr))
+    tups = list(zip(range(len(bold)), bold, grids, bounds, model))
     with sharedmem.Pool(np=mps) as pool:
         voxs = pool.map(fit_voxel, tups)
     voxs = list(sorted(voxs, key=lambda tup:tup[0]))

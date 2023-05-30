@@ -5,10 +5,14 @@ import popeye.og as og_nohrf
 import popeye.utilities as utils
 import sharedmem, multiprocessing, json, os, sys, six, nibabel as nib, pimms
 from popeye.visual_stimulus import VisualStimulus
+import time, datetime
 
 # We should have a json file, a BOLD file, and a stimulus file
 # First, read in the options
 (opts_file, bold_file, stim_file, stimjs_file, outdir) = sys.argv[1:]
+
+# start the timer
+start_time = time.time()
 
 # import our files...
 with open(opts_file, 'r') as fl:
@@ -152,6 +156,9 @@ with open(os.path.join(outdir, 'estimates.json'), 'w') as fl:
 
 # That's it!
 print("Popeye finished succesfully.")
+mins = (time.time()-start_time)/60
+secs = (time.time()-start_time)%60
+print(f"It took {mins:.0f} minutes and {secs:.0f} seconds to run.")
 sys.exit(0)
 
 

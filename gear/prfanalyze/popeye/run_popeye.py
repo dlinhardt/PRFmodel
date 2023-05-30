@@ -28,6 +28,7 @@ if fixed_hrf is True: fixed_hrf = 0.0
 Ns = opts.get('grid_density', 3)
 mps = opts.get('multiprocess', True)
 stim_scale_factor = opts.get('stim_scale_factor', False)
+verbosity = opts.get('verbosity', 1)
 
 # some post-processing
 if mps == 'auto' or mps is True: mps = multiprocessing.cpu_count()
@@ -81,7 +82,7 @@ def fit_voxel(tup):
     # verbose = 2 is very verbose
     if fixed_hrf is not False:
         fit = og_nohrf.GaussianFit(model, vx, grids, bounds, Ns=Ns,
-                                voxel_index=(ii, 1, 1), auto_fit=True, verbose=2)
+                                voxel_index=(ii, 1, 1), auto_fit=True, verbose=verbosity)
     else:
         fit = og.GaussianFit(model, vx, grids, bounds, Ns=Ns,
                             voxel_index=(ii, 1, 1), auto_fit=True, verbose=2)

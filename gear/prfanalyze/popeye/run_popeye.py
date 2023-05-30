@@ -27,6 +27,7 @@ if fixed_hrf is True: fixed_hrf = 0.0
 # some other options we can extract
 Ns = opts.get('grid_density', 3)
 mps = opts.get('multiprocess', True)
+stim_scale_factor = opts.get('stim_scale_factor', False)
 
 # some post-processing
 if mps == 'auto' or mps is True: mps = multiprocessing.cpu_count()
@@ -46,7 +47,7 @@ def fit_voxel(tup):
     # First get a viewing distance and screen size
     dist = 100 # 100 cm is arbitrary
     stim_width = 2 * dist * np.tan(np.pi/180 * width/2)
-    stimulus = VisualStimulus(stim, dist, stim_width, 1.0, float(tr), ctypes.c_int16)
+    stimulus = VisualStimulus(stim, dist, stim_width, stim_scale_factor, float(tr), ctypes.c_int16)
     if fixed_hrf is not False:
         model = og_nohrf.GaussianModel(stimulus, utils.double_gamma_hrf)
         model.hrf_delay = fixed_hrf
@@ -89,6 +90,13 @@ def fit_voxel(tup):
 #############################################################
 bold = bold_im.get_fdata().squeeze()
 stim = stim_im.get_fdata().squeeze()
+
+if not stim_scale_factor:
+    to_size = 101
+    is_size = max(stim.shape[:1])
+    stim_scale_factor = to_size / is_size
+    print(f'We set the stim_scale_factor to {stim_scale_factor:.03f} to make the stimulus {to_size} pixels on the longest side.')
+    print(f'Alternatively, you can set the stim_scale_factor in the options file.')
 
 # stimulus width and height
 if isinstance(stim_json, list):

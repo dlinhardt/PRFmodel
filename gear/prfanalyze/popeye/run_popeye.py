@@ -85,7 +85,7 @@ def fit_voxel(tup):
                                 voxel_index=(ii, 1, 1), auto_fit=True, verbose=verbosity)
     else:
         fit = og.GaussianFit(model, vx, grids, bounds, Ns=Ns,
-                            voxel_index=(ii, 1, 1), auto_fit=True, verbose=2)
+                            voxel_index=(ii, 1, 1), auto_fit=True, verbose=verbosity)
     return (ii, vx) + tuple(fit.overloaded_estimate) + (fit.prediction, fit.rss, fit.rsquared)
 
 #############################################################

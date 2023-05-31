@@ -102,11 +102,20 @@ else:
 dist = 100 # 100 cm is arbitrary
 stim_width = 2 * dist * np.tan(np.pi/180 * width/2)
 stimulus = VisualStimulus(stim, dist, stim_width, stim_scale_factor, float(tr), ctypes.c_int16)
+
+# create trends to remove from the TC
+nuisance = np.vstack((np.ones(stim.shape[-1]),
+                      np.linspace(-1,1,stim.shape[-1]),
+                      np.linspace(-1,1,stim.shape[-1])**2)).T
+
+### MODEL
 if fixed_hrf is not False:
-    model = og_nohrf.GaussianModel(stimulus, utils.double_gamma_hrf)
+    model = og_nohrf.GaussianModel(stimulus, utils.double_gamma_hrf, nuisance=nuisance)
     model.hrf_delay = fixed_hrf
-else: model = og.GaussianModel(stimulus, utils.double_gamma_hrf)
-### FIT
+else:
+    model = og.GaussianModel(stimulus, utils.double_gamma_hrf, nuisance=nuisance)
+
+### GRID and BOUDNS
 ## define search grids
 # these define min and max of the edge of the initial brute-force search.
 x_grid = (-width/2,width/2)
@@ -135,6 +144,7 @@ model  = np.tile(model, len(bold))
 
 print(f'Using {mps} cores to fit {len(bold)} voxels.')
 
+### FIT
 if mps == 1:
     voxs = [fit_voxel((ii, vx, g, b, m)) for (ii, vx, g, b, m) in zip(range(len(bold)), bold, grids, bounds, model)]
 else:
@@ -168,6 +178,3 @@ mins = (time.time()-start_time)/60
 secs = (time.time()-start_time)%60
 print(f"It took {mins:.0f} minutes and {secs:.0f} seconds to run.")
 sys.exit(0)
-
-
-

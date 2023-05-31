@@ -10,3 +10,4 @@ __MACOSX*
 .DS_Store
 */*/*/compiled/*
 */*/compiled/*
+gear/prfanalyze/popeye/run_popeye_dev.py

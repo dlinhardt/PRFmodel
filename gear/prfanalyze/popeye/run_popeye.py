@@ -110,8 +110,11 @@ nuisance = np.vstack((np.ones(stim.shape[-1]),
 
 ### MODEL
 if fixed_hrf is not False:
-    model = og_nohrf.GaussianModel(stimulus, utils.double_gamma_hrf, nuisance=nuisance)
-    model.hrf_delay = fixed_hrf
+    if isinstance(fixed_hrf, list):
+        model = og_nohrf.GaussianModel(stimulus, fixed_hrf, nuisance=nuisance)
+    else:
+        model = og_nohrf.GaussianModel(stimulus, utils.double_gamma_hrf, nuisance=nuisance)
+        model.hrf_delay = fixed_hrf
 else:
     model = og.GaussianModel(stimulus, utils.double_gamma_hrf, nuisance=nuisance)
 
